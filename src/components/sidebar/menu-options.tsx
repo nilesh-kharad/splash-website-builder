@@ -31,8 +31,8 @@ const MenuOptions = ({ details, id, user, sidebarLogo, sidebarOpt, subAccounts, 
     console.log("user", user)
     return (
         <Sheet modal={false}
-            open={true}
-        //  {...openState}
+            // open={true}
+         {...openState}
         >
             <SheetTrigger asChild className='absolute left-4 top-4 z-[100] md:hidden flex'>
                 <Button variant='outline' size={"icon"}>

@@ -11,6 +11,7 @@ type Props = {
 }
 
 const Layout = async ({ params, children }: Props) => {
+    const resolvedParams = await Promise.resolve(params); // Await if necessary
     const agencyId = await verifyAndAcceptInvitation()
     const user = await currentUser()
     if (!user) return redirect('/')
@@ -21,7 +22,7 @@ const Layout = async ({ params, children }: Props) => {
     const notifications = await getNotificationAndUser(agencyId)
     if (notifications) allNoti = notifications
     return <div className='h-screen overflow-hidden'>
-        <Sidebar id={params.agencyId} type='agency' />
+        <Sidebar id={resolvedParams.agencyId} type='agency' />
         <div className='md:pl-[300px]'>{children}</div>
     </div>
 
