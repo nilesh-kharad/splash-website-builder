@@ -1,6 +1,6 @@
 'use client'
 import { Agency, User } from "@prisma/client";
-import React, { createContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
 interface ModalProviderProps {
     children: React.ReactNode
@@ -51,3 +51,12 @@ const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     return <ModalContext.Provider value={{ data, setOpen, setClose, isOpen }}>{children}{shoingModal}</ModalContext.Provider>
 }
 
+export const useModal = ()=>{
+    const context = useContext(ModalContext)
+    if(!context){
+        throw new Error("useModal must be used with the modal provider")
+    }
+    return context
+}
+
+export default ModalProvider

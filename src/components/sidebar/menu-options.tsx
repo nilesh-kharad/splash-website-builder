@@ -10,6 +10,8 @@ import Image from 'next/image'
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover'
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from '../ui/command'
 import Link from 'next/link'
+import { useModal } from '@/providers/modal-provider'
+import CustomModal from '../global/custom-modal'
 
 type Props = {
     defaultOpen?: boolean
@@ -22,6 +24,7 @@ type Props = {
 }
 
 const MenuOptions = ({ details, id, user, sidebarLogo, sidebarOpt, subAccounts, defaultOpen }: Props) => {
+    const { setOpen } = useModal()
     const [isMounted, setIsMounted] = useState(false)
     const openState = useMemo(() => defaultOpen ? { open: true } : {}, [defaultOpen])
     useEffect(() => {
@@ -31,8 +34,8 @@ const MenuOptions = ({ details, id, user, sidebarLogo, sidebarOpt, subAccounts, 
     console.log("user", user)
     return (
         <Sheet modal={false}
-            // open={true}
-         {...openState}
+            open={true}
+        //  {...openState}
         >
             <SheetTrigger asChild className='absolute left-4 top-4 z-[100] md:hidden flex'>
                 <Button variant='outline' size={"icon"}>
@@ -66,27 +69,51 @@ const MenuOptions = ({ details, id, user, sidebarLogo, sidebarOpt, subAccounts, 
                                 <CommandList className='pb-16'>
                                     <CommandEmpty>No Results Found</CommandEmpty>
                                     {(user?.role === "AGENCY_OWNER" || user?.role === 'AGENCY_ADMIN') &&
-                                        user?.Agency && <CommandGroup heading='Agency'>
-                                            <CommandItem className='!bg-transparent my-2 text-primary border-[1px] border-border p-2 rounded-md hover:!bg-muted cursor-pointer transition-all'>
-                                                {defaultOpen ? <Link href={`/agency/${user?.Agency?.id}`} className='flex gap-4 w-full h-full' >
-                                                    <div className='relative w-16'>
-                                                        <Image src={user?.Agency?.agencyLogo} alt='Agency Logo' fill className='rounded-md object-contain' />
-                                                    </div>
-                                                    <div className='flex flex-col flex-1'>
-
-                                                        {user?.agency?.name} <span className='text-muted-foreground'>{user?.agency?.address}</span>
-                                                    </div>
-                                                </Link> :
+                                        user?.Agency?.id && <CommandGroup heading='Agency'>
+                                            <CommandItem className="!bg-transparent my-2 text-primary broder-[1px] border-border p-2 rounded-md hover:!bg-muted cursor-pointer transition-all">
+                                                {defaultOpen ? (
+                                                    <Link
+                                                        href={`/agency/${user?.Agency?.id}`}
+                                                        className="flex gap-4 w-full h-full"
+                                                    >
+                                                        <div className="relative w-16">
+                                                            <Image
+                                                                src={user?.Agency?.agencyLogo}
+                                                                alt="Agency Logo"
+                                                                fill
+                                                                className="rounded-md object-contain"
+                                                            />
+                                                        </div>
+                                                        <div className="flex flex-col flex-1">
+                                                            {user?.Agency?.name}
+                                                            <span className="text-muted-foreground">
+                                                                {user?.Agency?.address}
+                                                            </span>
+                                                        </div>
+                                                    </Link>
+                                                ) : (
                                                     <SheetClose asChild>
-                                                        <Link href={`/agency/${user?.Agency?.id}`} className='flex gap-4 w-full h-full' >
-                                                            <div className='relative w-16'>
-                                                                <Image src={user?.Agency?.agencyLogo} alt='Agency Logo' fill className='rounded-md object-contain' />
+                                                        <Link
+                                                            href={`/agency/${user?.Agency?.id}`}
+                                                            className="flex gap-4 w-full h-full"
+                                                        >
+                                                            <div className="relative w-16">
+                                                                <Image
+                                                                    src={user?.Agency?.agencyLogo}
+                                                                    alt="Agency Logo"
+                                                                    fill
+                                                                    className="rounded-md object-contain"
+                                                                />
                                                             </div>
-                                                            <div className='flex flex-col flex-1'>
-                                                                {user?.agency?.name} <span className='text-muted-foreground'>{user?.agency?.address}</span>
+                                                            <div className="flex flex-col flex-1">
+                                                                {user?.Agency?.name}
+                                                                <span className="text-muted-foreground">
+                                                                    {user?.Agency?.address}
+                                                                </span>
                                                             </div>
                                                         </Link>
-                                                    </SheetClose>}
+                                                    </SheetClose>
+                                                )}
                                             </CommandItem>
                                         </CommandGroup>}
                                     <CommandGroup heading='Accounts'>
@@ -116,9 +143,13 @@ const MenuOptions = ({ details, id, user, sidebarLogo, sidebarOpt, subAccounts, 
 
                                 </CommandList>
                                 {(user?.role === "AGENCY_OWNER" || user?.role === 'AGENCY_ADMIN') && (
-                                    <Button className='w-full flex gap-2'>
+                                    <Button className='w-full flex gap-2' onClick={() => {
+                                        setOpen(<CustomModal title='Create a subAccount' defaultOpen subheading='You can swithch between agency account and subaccount' >
+                                            <>Hello</>
+                                        </CustomModal>)
+                                    }}>
                                         <PlusCircleIcon size={15} />
-                                        Create SubAccount
+                                        Create Sub Account
                                     </Button>
                                 )}
                             </Command>

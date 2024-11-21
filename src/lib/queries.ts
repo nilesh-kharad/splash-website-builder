@@ -3,8 +3,9 @@
 import { clerkClient, currentUser } from "@clerk/nextjs/server"
 import { db } from "./db"
 import { redirect } from "next/navigation"
-import { Agency, Plan, User } from "@prisma/client"
+import { Agency, Plan, SubAccount, User } from "@prisma/client"
 import { connect } from "http2"
+import { v4 } from "uuid"
 const cleark_client = await clerkClient();
 
 export const getAuthUserDetails = async () => {
@@ -260,15 +261,94 @@ export const upsertAgency = async (agency: Agency) => {
 
 export const getNotificationAndUser = async (agencyId: string) => {
     try {
-      const response = await db.notification.findMany({
-        where: { agencyId },
-        include: { User: true },
-        orderBy: {
-          createdAt: 'desc',
-        },
-      })
-      return response
+        const response = await db.notification.findMany({
+            where: { agencyId },
+            include: { User: true },
+            orderBy: {
+                createdAt: 'desc',
+            },
+        })
+        return response
     } catch (error) {
-      console.log(error)
+        console.log(error)
     }
-  }
+}
+
+export const upsertSubAccount = async (subaccount: SubAccount) => {
+    if (!subaccount.companyEmail) return null
+    const agencyOwner = await db.user.findFirst({
+        where: {
+            Agency: { id: subaccount.agencyId },
+            role: 'AGENCY_OWNER'
+        }
+    })
+    if (!agencyOwner) return console.log("Error")
+    const permissionId = v4()
+    const response = await db.subAccount.upsert({
+        where: {
+            id: subaccount.id
+        },
+        update: subaccount,
+        create: {
+            ...subaccount,
+            Permissions: {
+                create: {
+                    access: true,
+                    email: agencyOwner.email,
+                    id: permissionId
+                },
+                connect: { subAccountId: subaccount.id, id: permissionId }
+            },
+            Pipeline: {
+                create: {
+                    name: 'Lead Cycle'
+                }
+            },
+            SidebarOption: {
+                create: [
+                    {
+                        name: 'Launchpad',
+                        icon: 'clipboardIcon',
+                        link: `/subaccount/${subaccount.id}/launchpad`,
+                    },
+                    {
+                        name: 'Settings',
+                        icon: 'settings',
+                        link: `/subaccount/${subaccount.id}/settings`,
+                    },
+                    {
+                        name: 'Funnels',
+                        icon: 'pipelines',
+                        link: `/subaccount/${subaccount.id}/funnels`,
+                    },
+                    {
+                        name: 'Media',
+                        icon: 'database',
+                        link: `/subaccount/${subaccount.id}/media`,
+                    },
+                    {
+                        name: 'Automations',
+                        icon: 'chip',
+                        link: `/subaccount/${subaccount.id}/automations`,
+                    },
+                    {
+                        name: 'Pipelines',
+                        icon: 'flag',
+                        link: `/subaccount/${subaccount.id}/pipelines`,
+                    },
+                    {
+                        name: 'Contacts',
+                        icon: 'person',
+                        link: `/subaccount/${subaccount.id}/contacts`,
+                    },
+                    {
+                        name: 'Dashboard',
+                        icon: 'category',
+                        link: `/subaccount/${subaccount.id}`,
+                    },
+                ],
+            },
+        }
+    })
+    return response
+}
