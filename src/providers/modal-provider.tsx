@@ -27,7 +27,7 @@ export const ModalContext = createContext<ModalContextType>({
 const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     const [isOpen, setIsOpen] = useState(false)
     const [data, setData] = useState<ModalData>({})
-    const [shoingModal, setShowingModal] = useState<React.ReactNode>(null)
+    const [showingModal, setShowingModal] = useState<React.ReactNode>(null)
     const [isMounted, setIsMounted] = useState(false)
 
     useEffect(() => {
@@ -48,7 +48,7 @@ const ModalProvider: React.FC<ModalProviderProps> = ({ children }) => {
     }
     if (!isMounted) return null
 
-    return <ModalContext.Provider value={{ data, setOpen, setClose, isOpen }}>{children}{shoingModal}</ModalContext.Provider>
+    return <ModalContext.Provider value={{ data, setOpen, setClose, isOpen }}>{children}{showingModal}</ModalContext.Provider>
 }
 
 export const useModal = ()=>{
