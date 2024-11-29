@@ -3,9 +3,12 @@
 import { clerkClient, currentUser } from "@clerk/nextjs/server"
 import { db } from "./db"
 import { redirect } from "next/navigation"
-import { Agency, Plan, SubAccount, User } from "@prisma/client"
+import { Agency, Plan, Role, SubAccount, User } from "@prisma/client"
 import { connect } from "http2"
 import { v4 } from "uuid"
+import { CreateFunnelFormSchema, CreateMediaType, UpsertFunnelPage } from "./types"
+import { z } from "zod"
+import { revalidatePath } from "next/cache"
 const cleark_client = await clerkClient();
 
 export const getAuthUserDetails = async () => {
@@ -355,9 +358,237 @@ export const upsertSubAccount = async (subaccount: SubAccount) => {
 
 export const getUserPermissions = async (userId: string) => {
     const response = await db.user.findUnique({
-      where: { id: userId },
-      select: { Permissions: { include: { SubAccount: true } } },
+        where: { id: userId },
+        select: { Permissions: { include: { SubAccount: true } } },
+    })
+
+    return response
+}
+export const changeUserPermissions = async (
+    permissionId: string | undefined,
+    userEmail: string,
+    subAccountId: string,
+    permission: boolean
+) => {
+    try {
+        const response = await db.permissions.upsert({
+            where: { id: permissionId },
+            update: { access: permission },
+            create: {
+                access: permission,
+                email: userEmail,
+                subAccountId: subAccountId,
+            },
+        })
+        return response
+    } catch (error) {
+        console.log('Could not change persmission', error)
+    }
+}
+
+export const updateUser = async (user: Partial<User>) => {
+    const response = await db.user.update({
+        where: { email: user.email },
+        data: { ...user },
+    })
+
+    await cleark_client.users.updateUserMetadata(response.id, {
+        privateMetadata: {
+            role: user.role || 'SUBACCOUNT_USER',
+        },
+    })
+
+    return response
+}
+
+export const deleteSubAccount = async (subaccountId: string) => {
+    const response = await db.subAccount.delete({
+        where: {
+            id: subaccountId,
+        },
+    })
+    return response
+}
+
+export const getSubaccountDetails = async (subaccountId: string) => {
+    const response = await db.subAccount.findUnique({
+        where: {
+            id: subaccountId,
+        },
+    })
+    return response
+}
+
+export const sendInvitation = async (
+    role: Role,
+    email: string,
+    agencyId: string
+) => {
+    const resposne = await db.invitation.create({
+        data: { email, agencyId, role },
+    })
+
+    try {
+        const invitation = await cleark_client.invitations.createInvitation({
+            emailAddress: email,
+            redirectUrl: process.env.NEXT_PUBLIC_URL,
+            publicMetadata: {
+                throughInvitation: true,
+                role,
+            },
+        })
+    } catch (error) {
+        console.log(error)
+        throw error
+    }
+
+    return resposne
+}
+
+export const deleteUser = async (userId: string) => {
+    await cleark_client.users.updateUserMetadata(userId, {
+        privateMetadata: {
+            role: undefined,
+        },
+    })
+    const deletedUser = await db.user.delete({ where: { id: userId } })
+
+    return deletedUser
+}
+export const getUser = async (id: string) => {
+    const user = await db.user.findUnique({
+        where: {
+            id,
+        },
+    })
+
+    return user
+}
+export const getPipelines = async (subaccountId: string) => {
+    const response = await db.pipeline.findMany({
+        where: { subAccountId: subaccountId },
+        include: {
+            Lane: {
+                include: { Tickets: true },
+            },
+        },
+    })
+    return response
+}
+export const getMedia = async (subaccountId: string) => {
+    const mediafiles = await db.subAccount.findUnique({
+        where: {
+            id: subaccountId,
+        },
+        include: { Media: true },
+    })
+    return mediafiles
+}
+
+export const deleteMedia = async (mediaId: string) => {
+    const response = await db.media.delete({
+        where: {
+            id: mediaId,
+        },
+    })
+    return response
+}
+
+export const createMedia = async (
+    subaccountId: string,
+    mediaFile: CreateMediaType
+) => {
+    const response = await db.media.create({
+        data: {
+            link: mediaFile.link,
+            name: mediaFile.name,
+            subAccountId: subaccountId,
+        },
+    })
+
+    return response
+}
+
+export const upsertFunnel = async (
+    subaccountId: string,
+    funnel: z.infer<typeof CreateFunnelFormSchema> & { liveProducts: string },
+    funnelId: string
+) => {
+    const response = await db.funnel.upsert({
+        where: { id: funnelId },
+        update: funnel,
+        create: {
+            ...funnel,
+            id: funnelId || v4(),
+            subAccountId: subaccountId,
+        },
+    })
+
+    return response
+}
+export const getFunnel = async (funnelId: string) => {
+    const funnel = await db.funnel.findUnique({
+        where: { id: funnelId },
+        include: {
+            FunnelPages: {
+                orderBy: {
+                    order: 'asc',
+                },
+            },
+        },
+    })
+
+    return funnel
+}
+export const getFunnels = async (subacountId: string) => {
+    const funnels = await db.funnel.findMany({
+        where: { subAccountId: subacountId },
+        include: { FunnelPages: true },
+    })
+
+    return funnels
+}
+export const upsertFunnelPage = async (
+    subaccountId: string,
+    funnelPage: UpsertFunnelPage,
+    funnelId: string
+  ) => {
+    if (!subaccountId || !funnelId) return
+    const response = await db.funnelPage.upsert({
+      where: { id: funnelPage.id || '' },
+      update: { ...funnelPage },
+      create: {
+        ...funnelPage,
+        content: funnelPage.content
+          ? funnelPage.content
+          : JSON.stringify([
+              {
+                content: [],
+                id: '__body',
+                name: 'Body',
+                styles: { backgroundColor: 'white' },
+                type: '__body',
+              },
+            ]),
+        funnelId,
+      },
+    })
+  
+    revalidatePath(`/subaccount/${subaccountId}/funnels/${funnelId}`, 'page')
+    return response
+  }
+
+
+  export const getFunnelPageDetails = async (funnelPageId: string) => {
+    const response = await db.funnelPage.findUnique({
+      where: {
+        id: funnelPageId,
+      },
     })
   
     return response
-}
+  }
+
+
+
+  
