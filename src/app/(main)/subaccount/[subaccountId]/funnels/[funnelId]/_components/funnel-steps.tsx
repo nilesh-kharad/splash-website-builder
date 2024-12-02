@@ -1,23 +1,22 @@
 'use client'
-import CreateFunnelPage from '@/components/forms/funnel-page'
 import CustomModal from '@/components/global/custom-modal'
 import { AlertDialog } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { toast } from '@/components/ui/use-toast'
+import { toast } from 'sonner'
 import { upsertFunnelPage } from '@/lib/queries'
 import { FunnelsForSubAccount } from '@/lib/types'
 import { useModal } from '@/providers/modal-provider'
 import { FunnelPage } from '@prisma/client'
 import { Check, ExternalLink, LucideEdit } from 'lucide-react'
 import React, { useState } from 'react'
-
 import {
   DragDropContext,
   DragStart,
   DropResult,
   Droppable,
 } from 'react-beautiful-dnd'
+
 import Link from 'next/link'
 import FunnelPagePlaceholder from '@/components/icons/funnel-page-placeholder'
 
@@ -28,6 +27,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import FunnelStepCard from './funnel-step-card'
+import CreateFunnelPage from '@/components/forms/funnel-page'
 
 type Props = {
   funnel: FunnelsForSubAccount
@@ -81,17 +81,14 @@ const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
         )
       } catch (error) {
         console.log(error)
-        toast({
-          variant: 'destructive',
-          title: 'Failed',
+        toast('Success', {
           description: 'Could not save page order',
         })
         return
       }
     })
 
-    toast({
-      title: 'Success',
+    toast('Success', {
       description: 'Saved page order',
     })
   }

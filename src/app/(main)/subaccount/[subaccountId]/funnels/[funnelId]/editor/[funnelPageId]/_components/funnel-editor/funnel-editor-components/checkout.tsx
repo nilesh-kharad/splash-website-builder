@@ -1,15 +1,15 @@
 'use client'
 import Loading from '@/components/global/loading'
 import { Badge } from '@/components/ui/badge'
-import { toast } from '@/components/ui/use-toast'
+import { toast } from 'sonner'
 import { EditorBtns } from '@/lib/constants'
 import { getFunnel, getSubaccountDetails } from '@/lib/queries'
 import { getStripe } from '@/lib/stripe/stripe-client'
 import { EditorElement, useEditor } from '@/providers/editor/editor-provider'
-import {
-  EmbeddedCheckout,
-  EmbeddedCheckoutProvider,
-} from '@stripe/react-stripe-js'
+// import {
+//   EmbeddedCheckout,
+//   EmbeddedCheckoutProvider,
+// } from '@stripe/react-stripe-js'
 import clsx from 'clsx'
 import { Trash } from 'lucide-react'
 import { useRouter } from 'next/navigation'
@@ -77,13 +77,8 @@ const Checkout = (props: Props) => {
             setClientSecret(responseJson.clientSecret)
           }
         } catch (error) {
-          toast({
-            open: true,
-            className: 'z-[100000]',
-            variant: 'destructive',
-            title: 'Oppse!',
-            //@ts-ignore
-            description: error.message,
+          toast('Oppse!', {
+            description: 'Could not save editor',
           })
         }
       }
@@ -155,7 +150,7 @@ const Checkout = (props: Props) => {
 
       <div className="border-none transition-all w-full">
         <div className="flex flex-col gap-4 w-full">
-          {options.clientSecret && subAccountConnectAccId && (
+          {/* {options.clientSecret && subAccountConnectAccId && (
             <div className="text-white">
               <EmbeddedCheckoutProvider
                 stripe={getStripe(subAccountConnectAccId)}
@@ -164,7 +159,7 @@ const Checkout = (props: Props) => {
                 <EmbeddedCheckout />
               </EmbeddedCheckoutProvider>
             </div>
-          )}
+          )} */}
 
           {!options.clientSecret && (
             <div className="flex items-center justify-center w-full h-40">

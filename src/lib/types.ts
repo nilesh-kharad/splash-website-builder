@@ -62,3 +62,12 @@ export type UpsertFunnelPage = Prisma.FunnelPageCreateWithoutFunnelInput
 
 
 
+export const ContactUserFormSchema = z.object({
+  name: z.string().min(1, 'Required'),
+  email: z.string().email(),
+})
+
+export const FunnelPageSchema = z.object({
+  name: z.string().min(1),
+  pathName: z.string().optional(),
+})

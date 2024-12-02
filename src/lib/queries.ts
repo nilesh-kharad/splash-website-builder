@@ -3,7 +3,7 @@
 import { clerkClient, currentUser } from "@clerk/nextjs/server"
 import { db } from "./db"
 import { redirect } from "next/navigation"
-import { Agency, Plan, Role, SubAccount, User } from "@prisma/client"
+import { Agency, Plan, Prisma, Role, SubAccount, User } from "@prisma/client"
 import { connect } from "http2"
 import { v4 } from "uuid"
 import { CreateFunnelFormSchema, CreateMediaType, UpsertFunnelPage } from "./types"
@@ -552,43 +552,69 @@ export const upsertFunnelPage = async (
     subaccountId: string,
     funnelPage: UpsertFunnelPage,
     funnelId: string
-  ) => {
+) => {
     if (!subaccountId || !funnelId) return
     const response = await db.funnelPage.upsert({
-      where: { id: funnelPage.id || '' },
-      update: { ...funnelPage },
-      create: {
-        ...funnelPage,
-        content: funnelPage.content
-          ? funnelPage.content
-          : JSON.stringify([
-              {
-                content: [],
-                id: '__body',
-                name: 'Body',
-                styles: { backgroundColor: 'white' },
-                type: '__body',
-              },
-            ]),
-        funnelId,
-      },
+        where: { id: funnelPage.id || '' },
+        update: { ...funnelPage },
+        create: {
+            ...funnelPage,
+            content: funnelPage.content
+                ? funnelPage.content
+                : JSON.stringify([
+                    {
+                        content: [],
+                        id: '__body',
+                        name: 'Body',
+                        styles: { backgroundColor: 'white' },
+                        type: '__body',
+                    },
+                ]),
+            funnelId,
+        },
     })
-  
+
     revalidatePath(`/subaccount/${subaccountId}/funnels/${funnelId}`, 'page')
     return response
-  }
+}
 
 
-  export const getFunnelPageDetails = async (funnelPageId: string) => {
+export const getFunnelPageDetails = async (funnelPageId: string) => {
     const response = await db.funnelPage.findUnique({
-      where: {
-        id: funnelPageId,
-      },
+        where: {
+            id: funnelPageId,
+        },
     })
+
+    return response
+}
+
+
+
+export const upsertContact = async (
+    contact: Prisma.ContactUncheckedCreateInput
+) => {
+    const response = await db.contact.upsert({
+        where: { id: contact.id || v4() },
+        update: contact,
+        create: contact,
+    })
+    return response
+}
+
+export const updateFunnelProducts = async (
+    products: string,
+    funnelId: string
+) => {
+    const data = await db.funnel.update({
+        where: { id: funnelId },
+        data: { liveProducts: products },
+    })
+    return data
+}
+
+export const deleteFunnelePage = async (funnelPageId: string) => {
+    const response = await db.funnelPage.delete({ where: { id: funnelPageId } })
   
     return response
   }
-
-
-
-  

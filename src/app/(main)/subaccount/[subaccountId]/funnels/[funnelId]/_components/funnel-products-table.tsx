@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import Stripe from 'stripe'
+// import Stripe from 'stripe'
 import Image from 'next/image'
 import {
   saveActivityLogsNotification,
@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button'
 
 interface FunnelProductsTableProps {
   defaultData: Funnel
-  products: Stripe.Product[]
+  products : []
 }
 
 const FunnelProductsTable: React.FC<FunnelProductsTableProps> = ({
@@ -49,7 +49,7 @@ const FunnelProductsTable: React.FC<FunnelProductsTableProps> = ({
     router.refresh()
   }
 
-  const handleAddProduct = async (product: Stripe.Product) => {
+  const handleAddProduct = async (product: FunnelProductsTableProps) => {
     const productIdExists = liveProducts.find(
       //@ts-ignore
       (prod) => prod.productId === product.default_price.id

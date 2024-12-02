@@ -1,7 +1,6 @@
 'use client'
-import ContactForm from '@/components/forms/contact-form'
 import { Badge } from '@/components/ui/badge'
-import { toast } from '@/components/ui/use-toast'
+import { toast } from 'sonner'
 import { EditorBtns } from '@/lib/constants'
 import {
   getFunnel,
@@ -17,6 +16,7 @@ import { useRouter } from 'next/navigation'
 
 import React from 'react'
 import { z } from 'zod'
+import ContactForm from '@/components/forms/contact-form'
 
 type Props = {
   element: EditorElement
@@ -81,15 +81,13 @@ const ContactFormComponent = (props: Props) => {
         description: `A New contact signed up | ${response?.name}`,
         subaccountId: subaccountId,
       })
-      toast({
-        title: 'Success',
+      toast(
+        'Success', {
         description: 'Successfully Saved your info',
       })
       await goToNextPage()
     } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Failed',
+      toast('Failed', {
         description: 'Could not save your information',
       })
     }
